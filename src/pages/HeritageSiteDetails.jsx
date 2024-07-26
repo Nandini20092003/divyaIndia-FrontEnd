@@ -55,7 +55,7 @@ const HeritageSiteDetails = () => {
         reviewText,
         rating: siteRating,
         productId: id,
-        onModel: "HeritageSite",
+        onModel: 'HeritageSite',
       };
 
       const res = await fetch(`${BASE_URL}/review/heritage-site/${id}`, {
@@ -73,7 +73,7 @@ const HeritageSiteDetails = () => {
       }
 
       alert(result.message);
-      fetchData(); // Refresh the data after submission
+      fetchData(); 
     } catch (err) {
       alert(err.message || "Failed to submit review");
     }
