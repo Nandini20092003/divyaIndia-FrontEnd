@@ -19,7 +19,7 @@ const HeritageSiteDetails = () => {
     data: heritageSite,
     loading,
     error,
-    fetchData,
+    fetchData, // Use fetchData to refresh data
   } = useFetch(`${BASE_URL}/heritageSites/${id}`);
 
   const {
@@ -54,9 +54,11 @@ const HeritageSiteDetails = () => {
         username: user.username,
         reviewText,
         rating: siteRating,
+        productId: id,
+        onModel: "HeritageSite",
       };
 
-      const res = await fetch(`${BASE_URL}/reviews/${id}`, {
+      const res = await fetch(`${BASE_URL}/review/heritage-site/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,8 +73,7 @@ const HeritageSiteDetails = () => {
       }
 
       alert(result.message);
-      // Refetch data to update reviews list
-      fetchData();
+      fetchData(); // Refresh the data after submission
     } catch (err) {
       alert(err.message || "Failed to submit review");
     }
@@ -101,7 +102,7 @@ const HeritageSiteDetails = () => {
                         <i
                           className="ri-star-s-fill"
                           style={{ color: "var(--secondary-color)" }}
-                        ></i>{" "}
+                        ></i>
                         {avgRating === 0 ? "Not Rated" : avgRating.toFixed(1)}
                         {totalRating === 0 ? (
                           "Not Rated"
@@ -109,19 +110,17 @@ const HeritageSiteDetails = () => {
                           <span>({reviews?.length} reviews)</span>
                         )}
                       </span>
-
                       <span>
-                        <i className="ri-map-pin-user-fill"></i> {address}{" "}
+                        <i className="ri-map-pin-user-fill"></i> {address}
                       </span>
                     </div>
-
                     <div className="heritage-site__extra-details">
                       <span>
-                        <i className="ri-map-pin-2-line"></i> {city}{" "}
+                        <i className="ri-map-pin-2-line"></i> {city}
                       </span>
                       <span>
                         <i className="ri-money-dollar-circle-line"></i> ₹{price}{" "}
-                        / per person{" "}
+                        / per person
                       </span>
                       <span>
                         <i className="ri-map-pin-time-line"></i> {distance} km
@@ -140,7 +139,7 @@ const HeritageSiteDetails = () => {
                     <p>{additionalDetails}</p>
                   </div>
                   <div className="heritage-site__reviews mt-4">
-                  <ListGroup className="user__reviews">
+                    <ListGroup className="user__reviews">
                       {reviews?.map((review) => (
                         <div className="review__item" key={review._id}>
                           <img src={avatar} alt="avatar" />
@@ -164,10 +163,9 @@ const HeritageSiteDetails = () => {
                         </div>
                       ))}
                     </ListGroup>
-                    </div>
+                  </div>
                 </div>
               </Col>
-
               <Col lg="4">
                 <div className="heritage-site__content">
                   <img
@@ -196,15 +194,13 @@ const HeritageSiteDetails = () => {
                           required
                         />
                         <button
-                          type="submit"
                           className="btn primary__btn text-white"
+                          type="submit"
                         >
                           Submit
                         </button>
                       </div>
                     </Form>
-
-                    
                   </div>
                 </div>
               </Col>
@@ -212,7 +208,6 @@ const HeritageSiteDetails = () => {
           )}
         </Container>
       </section>
-
       <Newsletter />
     </>
   );
