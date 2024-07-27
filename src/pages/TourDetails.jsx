@@ -8,6 +8,7 @@ import Newsletter from "../shared/Newsletter";
 import useFetch from "../hooks/useFetch";
 import { BASE_URL } from "../utils/config";
 import { AuthContext } from "../context/AuthContext";
+import Booking from "../components/Booking/Booking"
 
 const TourDetails = () => {
   const { id } = useParams();
@@ -59,13 +60,13 @@ const TourDetails = () => {
       alert(err.message || "Failed to submit review");
     }
   };
-    
 
   useEffect(() => {
     if (tour) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0)
     }
-  }, [tour]);
+  }, [tour])
+  
 
   return (
     <>
@@ -77,6 +78,7 @@ const TourDetails = () => {
             <Row>
               <Col lg="8">
                 <div className="tour__content">
+                <img src={photo} alt={title} className="tour__detailed-img--fixed" />
                   <div className="tour__info">
                     <h2>{title}</h2>
                     <div className="d-flex align-items-center gap-5">
@@ -106,6 +108,26 @@ const TourDetails = () => {
                     <h5>Description</h5>
                     <p>{desc}</p>
                   </div>
+
+                  <div className="tour__reviews mt-4">
+                    <h4>Reviews</h4>
+                    <Form onSubmit={submitHandler}>
+                      <div className="d-flex align-items-center gap-3 mb-4 rating__group">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <span key={rating} onClick={() => setTourRating(rating)}>
+                            {rating} <i className="ri-star-s-fill"></i>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="review__input">
+                        <input type="text" ref={reviewMsgRef} placeholder="Share your thoughts" required />
+                        <button className="btn primary__btn text-white" type="submit">
+                          Submit
+                        </button>
+                      </div>
+                    </Form>
+                  </div>
+
                   <div className="tour__reviews mt-4">
                     <ListGroup className="user__reviews">
                       {reviews?.map((review) => (
@@ -132,27 +154,7 @@ const TourDetails = () => {
                 </div>
               </Col>
               <Col lg="4">
-                <div className="tour__content">
-                  <img src={photo} alt={title} className="tour__detailed-img--fixed" />
-                  <div className="tour__reviews mt-4">
-                    <h4>Reviews</h4>
-                    <Form onSubmit={submitHandler}>
-                      <div className="d-flex align-items-center gap-3 mb-4 rating__group">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <span key={rating} onClick={() => setTourRating(rating)}>
-                            {rating} <i className="ri-star-s-fill"></i>
-                          </span>
-                        ))}
-                      </div>
-                      <div className="review__input">
-                        <input type="text" ref={reviewMsgRef} placeholder="Share your thoughts" required />
-                        <button className="btn primary__btn text-white" type="submit">
-                          Submit
-                        </button>
-                      </div>
-                    </Form>
-                  </div>
-                </div>
+                <Booking tour={tour} avgRating={avgRating}/>
               </Col>
             </Row>
           )}
