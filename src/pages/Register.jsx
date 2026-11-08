@@ -8,35 +8,43 @@ import { AuthContext } from "../context/AuthContext";
 import { BASE_URL } from "../utils/config";
 
 const Register = () => {
-  const [credentials, setCredentials] = useState({
-    username: undefined,
-    email: undefined,
-    password: undefined,
-  });
-
+  const [credentials, setCredentials] = useState({ username: "", email: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+  const handleChange = (event) => {
+    setCredentials((previous) => ({
+      ...previous,
+      [event.target.id]: event.target.value,
+    }));
   };
 
-  const handleClick = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+
     try {
-      const res = await fetch(`${BASE_URL}/auth/register`, {
+      const response = await fetch(`${BASE_URL}/auth/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
-      const result = await res.json();
-      if (!res.ok) alert(result.message);
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        alert(result.message || "Unable to create account");
+        return;
+      }
+
       dispatch({ type: "REGISTER_SUCCESS" });
+      alert("Account created successfully. Please sign in.");
       navigate("/login");
-    } catch (err) {
-      alert(err.message);
+    } catch {
+      alert("Unable to connect to the server. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -46,52 +54,30 @@ const Register = () => {
         <Row>
           <Col lg="8" className="m-auto">
             <div className="login__container d-flex justify-content-between">
-              <div className="login__img">
-                <img src={registerImg} alt="login" />
-              </div>
+              <div className="login__img"><img src={registerImg} alt="Register" /></div>
               <div className="login__form">
-                <div className="user">
-                  <img src={userIcon} alt="user" />
-                </div>
+                <div className="user"><img src={userIcon} alt="User" /></div>
                 <h2>Register</h2>
-                <Form onSubmit={handleClick}>
+                <Form onSubmit={handleSubmit}>
                   <FormGroup>
-                    <input
-                      type="text"
-                      placeholder="Username"
-                      required
-                      id="username"
-                      onChange={handleChange}
-                    />
+                    <input type="text" placeholder="Username" required id="username"
+                      minLength={3} maxLength={30} autoComplete="username"
+                      value={credentials.username} onChange={handleChange} />
                   </FormGroup>
                   <FormGroup>
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      required
-                      id="email"
-                      onChange={handleChange}
-                    />
+                    <input type="email" placeholder="Email" required id="email"
+                      autoComplete="email" value={credentials.email} onChange={handleChange} />
                   </FormGroup>
                   <FormGroup>
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      required
-                      id="password"
-                      onChange={handleChange}
-                    />
+                    <input type="password" placeholder="Password" required id="password"
+                      minLength={8} maxLength={128} autoComplete="new-password"
+                      value={credentials.password} onChange={handleChange} />
                   </FormGroup>
-                  <Button
-                    className="btn secondary__btn auth__btn"
-                    type="submit"
-                  >
-                    Create Account
+                  <Button className="btn secondary__btn auth__btn" type="submit" disabled={submitting}>
+                    {submitting ? "Creating account..." : "Create Account"}
                   </Button>
                 </Form>
-                <p>
-                  Already have an account? <Link to="/login">Login</Link>{" "}
-                </p>
+                <p>Already have an account? <Link to="/login">Login</Link></p>
               </div>
             </div>
           </Col>
