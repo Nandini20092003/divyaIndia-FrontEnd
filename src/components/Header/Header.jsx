@@ -27,6 +27,8 @@ const Header = () => {
         method: "POST",
         credentials: "include",
       });
+    } catch {
+      // Clear the local session even if the network is unavailable.
     } finally {
       dispatch({ type: "LOGOUT" });
       navigate("/");
