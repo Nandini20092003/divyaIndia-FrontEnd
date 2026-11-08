@@ -8,37 +8,47 @@ import { AuthContext } from "../context/AuthContext";
 import { BASE_URL } from "../utils/config";
 
 const Login = () => {
-  const [credentials, setCredentials] = useState({
-    email: undefined,
-    password: undefined,
-  });
-
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+  const handleChange = (event) => {
+    setCredentials((previous) => ({
+      ...previous,
+      [event.target.id]: event.target.value,
+    }));
   };
 
-  const handleClick = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (submitting) return;
+
     dispatch({ type: "LOGIN_START" });
+    setSubmitting(true);
     try {
-      const res = await fetch(`${BASE_URL}/auth/login`, {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(credentials),
       });
-      const result = await res.json();
-      if (!res.ok) alert(result.message);
-      console.log(result.data);
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = result.message || "Unable to sign in";
+        dispatch({ type: "LOGIN_FAILURE", payload: message });
+        alert(message);
+        return;
+      }
+
       dispatch({ type: "LOGIN_SUCCESS", payload: result.data });
       navigate("/");
-    } catch (err) {
-      dispatch({ type: "LOGIN_FAILURE", payload: err.message });
+    } catch (error) {
+      dispatch({ type: "LOGIN_FAILURE", payload: "Unable to connect to the server" });
+      alert("Unable to connect to the server. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -49,43 +59,25 @@ const Login = () => {
           <Col lg="8" className="m-auto">
             <div className="login__container d-flex justify-content-between">
               <div className="login__img">
-                <img src={loginImg} alt="login" />
+                <img src={loginImg} alt="Login" />
               </div>
               <div className="login__form">
-                <div className="user">
-                  <img src={userIcon} alt="user" />
-                </div>
+                <div className="user"><img src={userIcon} alt="User" /></div>
                 <h2>Login</h2>
-                <Form onSubmit={handleClick}>
+                <Form onSubmit={handleSubmit}>
                   <FormGroup>
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      required
-                      id="email"
-                      onChange={handleChange}
-                    />
+                    <input type="email" placeholder="Email" required id="email"
+                      autoComplete="email" value={credentials.email} onChange={handleChange} />
                   </FormGroup>
                   <FormGroup>
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      required
-                      id="password"
-                      onChange={handleChange}
-                    />
+                    <input type="password" placeholder="Password" required id="password"
+                      autoComplete="current-password" value={credentials.password} onChange={handleChange} />
                   </FormGroup>
-                  <Button
-                    className="btn secondary__btn auth__btn"
-                    type="submit"
-                  >
-                    Login
+                  <Button className="btn secondary__btn auth__btn" type="submit" disabled={submitting}>
+                    {submitting ? "Signing in..." : "Login"}
                   </Button>
                 </Form>
-                <p>
-                  Don't have an account?{" "}
-                  <Link to="/register">Create Account</Link>{" "}
-                </p>
+                <p>Don't have an account? <Link to="/register">Create Account</Link></p>
               </div>
             </div>
           </Col>
