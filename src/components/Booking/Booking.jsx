@@ -7,126 +7,106 @@ import { AuthContext } from "../../context/AuthContext";
 
 const Booking = ({ tour = {}, avgRating = 0 }) => {
   const { price = 0, reviews = [], title = "Tour" } = tour;
-
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-
+  const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState({
-    userId: user?._id || "",
-    userEmail: user?.email || "",
     tourName: title,
     fullName: "",
     phone: "",
-    guestSize: 1,
+    guestSize: "1",
     bookAt: "",
   });
 
-  const handleChange = (e) => {
-    setBooking((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+  const handleChange = (event) => {
+    setBooking((previous) => ({
+      ...previous,
+      [event.target.id]: event.target.value,
+    }));
   };
 
   const serviceFee = 1000;
-  const totalAmount =
-    Number(price) * Number(booking.guestSize) + Number(serviceFee);
+  const guestCount = Math.max(1, Number(booking.guestSize) || 1);
+  const totalAmount = Number(price) * guestCount + serviceFee;
 
-  const handleClick = async (e) => {
-    e.preventDefault();
-    console.log(booking);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!user) {
+      alert("Please sign in to make a booking.");
+      return;
+    }
+    if (submitting) return;
+
+    setSubmitting(true);
     try {
-      if (!user) {
-        return alert("Please Sign in");
-      }
-      const res = await fetch(`${BASE_URL}/booking`, {
+      const response = await fetch(`${BASE_URL}/booking`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(booking),
+        body: JSON.stringify({
+          tourName: title,
+          fullName: booking.fullName,
+          phone: booking.phone,
+          guestSize: Number(booking.guestSize),
+          bookAt: booking.bookAt,
+        }),
       });
-      const result = await res.json();
-      if (!res.ok) {
-        return alert(result.message);
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(result.message || "Unable to create booking");
+        return;
       }
       navigate("/thank-you");
-    } catch (err) {
-      alert(err.message);
+    } catch {
+      alert("Unable to connect to the server. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="booking">
       <div className="booking__top d-flex align-items-center justify-content-between">
-        <h3>
-          ₹{price} <span>/per person</span>
-        </h3>
+        <h3>₹{price} <span>/per person</span></h3>
         <span className="tour__rating d-flex align-items-center">
-          <i className="ri-star-s-fill"></i>{" "}
-          {avgRating || "N/A"} ({reviews.length})
+          <i className="ri-star-s-fill"></i> {avgRating || "N/A"} ({reviews.length})
         </span>
       </div>
 
       <div className="booking__form">
         <h5>Information</h5>
-        <Form className="booking__info-form" onSubmit={handleClick}>
+        <Form className="booking__info-form" onSubmit={handleSubmit}>
           <FormGroup>
-            <input
-              type="text"
-              placeholder="Full Name"
-              id="fullName"
-              required
-              onChange={handleChange}
-            />
+            <input type="text" placeholder="Full Name" id="fullName" required
+              minLength={2} maxLength={100} value={booking.fullName} onChange={handleChange} />
           </FormGroup>
           <FormGroup>
-            <input
-              type="number"
-              placeholder="Phone"
-              id="phone"
-              required
-              onChange={handleChange}
-            />
+            <input type="tel" placeholder="Phone" id="phone" required
+              pattern="[0-9]{7,15}" value={booking.phone} onChange={handleChange} />
           </FormGroup>
           <FormGroup className="d-flex align-items-center gap-3">
-            <input
-              type="date"
-              placeholder=""
-              id="bookAt"
-              required
-              onChange={handleChange}
-            />
-            <input
-              type="number"
-              placeholder="Guest"
-              id="guestSize"
-              required
-              onChange={handleChange}
-            />
+            <input type="date" id="bookAt" required value={booking.bookAt} onChange={handleChange} />
+            <input type="number" placeholder="Guests" id="guestSize" required
+              min="1" max="20" value={booking.guestSize} onChange={handleChange} />
           </FormGroup>
+          <div className="booking__bottom">
+            <ListGroup>
+              <ListGroupItem className="border-0 px-0">
+                <h5>₹{price} × {guestCount} guests</h5>
+                <span>₹{Number(price) * guestCount}</span>
+              </ListGroupItem>
+              <ListGroupItem className="border-0 px-0">
+                <h5>Service Charge</h5><span>₹{serviceFee}</span>
+              </ListGroupItem>
+              <ListGroupItem className="border-0 px-0 total">
+                <h5>Total</h5><span>₹{totalAmount}</span>
+              </ListGroupItem>
+            </ListGroup>
+            <Button className="btn primary__btn w-100 mt-4" type="submit" disabled={submitting}>
+              {submitting ? "Booking..." : "Book Now"}
+            </Button>
+          </div>
         </Form>
-      </div>
-
-      <div className="booking__bottom">
-        <ListGroup>
-          <ListGroupItem className="border-0 px-0">
-            <h5 className="d-flex align-items-center gap-1">
-              ₹{price} <i className="ri-close-line"></i> 1 person{" "}
-            </h5>
-            <span>₹{price}</span>
-          </ListGroupItem>
-          <ListGroupItem className="border-0 px-0">
-            <h5>Service Charge</h5>
-            <span>₹{serviceFee}</span>
-          </ListGroupItem>
-          <ListGroupItem className="border-0 px-0 total">
-            <h5>Total</h5>
-            <span>₹{totalAmount}</span>
-          </ListGroupItem>
-        </ListGroup>
-
-        <Button className="btn primary__btn w-100 mt-4" onClick={handleClick}>
-          Book Now
-        </Button>
       </div>
     </div>
   );

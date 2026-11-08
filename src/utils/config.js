@@ -1,3 +1,5 @@
-//utils/config.js
-// export const BASE_URL = 'http://localhost:4000/api/v1'
-export const BASE_URL = "https://divyaindiabackend.onrender.com/api/v1";
+const configuredBaseUrl = process.env.REACT_APP_API_BASE_URL;
+
+export const BASE_URL = (
+  configuredBaseUrl || "https://divyaindiabackend.onrender.com/api/v1"
+).replace(/\/$/, "");

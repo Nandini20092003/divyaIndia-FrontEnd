@@ -1,0 +1,36 @@
+name: Frontend CI
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main, "security/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install --package-lock-only
+      - run: npm ci
+      - name: Apply non-breaking dependency updates and report remaining advisories
+        continue-on-error: true
+        run: |
+          npm audit fix || true
+          npm audit --json > npm-audit.json || true
+          node -e 'const audit = require("./npm-audit.json"); console.log("Remaining dependency vulnerabilities:", JSON.stringify(audit.metadata?.vulnerabilities || {})); for (const [name, item] of Object.entries(audit.vulnerabilities || {})) console.log(name, item.severity, "fixAvailable:", JSON.stringify(item.fixAvailable));'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: apply non-breaking npm security updates [skip ci]"
+            git push
+          fi
+      - run: npm run build
