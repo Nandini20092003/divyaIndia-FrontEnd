@@ -32,4 +32,4 @@ jobs:
             git commit -m "chore: apply non-breaking npm security updates [skip ci]"
             git push
           fi
-
+      - run: npm run build
