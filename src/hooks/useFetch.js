@@ -1,37 +1,50 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const useFetch = (url) => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(url));
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        setError("Failed to fetch");
-      }
-      const result = await res.json();
-      setData(result.data);
+  const fetchData = useCallback(async (signal) => {
+    if (!url) {
+      setData([]);
       setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
+      setError("A request URL is required");
+      return;
     }
-  };
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(url, {
+        credentials: "include",
+        signal,
+        headers: { Accept: "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      const result = await response.json();
+      setData(result?.data ?? []);
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        setError(err.message || "Unable to fetch data");
+      }
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
   }, [url]);
 
-  return {
-    data,
-    loading,
-    error,
-    fetchData,
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
+  }, [fetchData]);
+
+  return { data, loading, error, fetchData: () => fetchData() };
 };
 
 export default useFetch;
