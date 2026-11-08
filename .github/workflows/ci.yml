@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - run: npm install --package-lock-only
       - run: npm ci
       - name: Apply non-breaking dependency updates and report remaining advisories
         continue-on-error: true
